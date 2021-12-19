@@ -4,7 +4,9 @@ from bs4 import BeautifulSoup
 
 Result = []
 
-URL = "https://www.eventpop.me/explore/search?sort=upcoming&block=upcoming_events&category_ids=&page=2"
+Web = "Event Pop"
+
+URL = "https://www.eventpop.me/explore/search?sort=upcoming&block=upcoming_events&category_ids=&page=1"
 
 StartText = """  <div data-react-class="ExploreResult" data-react-props=" """
 StartText = StartText[:-1]
@@ -83,8 +85,8 @@ for i in Data:
             "DiscountCondition": "N",
             "DiscountDescription": {},
             "OrganizerId": "",
-            "Organizer": "Event Pop",
-            "OrganizerEN": "Event Pop",
+            "Organizer": "",
+            "OrganizerEN": "",
             "SectorNameTH": "",
             "SectorNameEN": "",
             "Start": Start,
@@ -114,6 +116,7 @@ for i in Data:
             "IsTradeShow": "N",
             "AttendeePerson": {},
             "AttendeeJuristic": {},
+            "DataSource": Web,
         }
     )
 
