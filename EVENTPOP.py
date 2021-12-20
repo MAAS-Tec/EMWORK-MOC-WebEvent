@@ -1,8 +1,8 @@
 import requests
 import json
 from bs4 import BeautifulSoup
-
-Result = []
+from elasticsearch import Elasticsearch
+import uuid
 
 Web = "Event Pop"
 
@@ -52,72 +52,101 @@ for i in Data:
     Remain = Remain[Remain.find('"url":"')+7:]
     Website = Remain[:Remain.find('"},')]
 
-    Result.append(
-        {
-            "Keyword": [],
-            "Gallery": [],
-            "Document": [],
-            "AttendeeType": [],
-            "FeeChannel": [],
-            "Product": [],
-            "ResponsibleInfo": [],
-            "Speaker": [],
-            "PolicyPublicDemand": [],
-            "TypeId": "",
-            "Type": "",
-            "TypeEN": "",
-            "Id": Id,
-            "Name": Name,
-            "NameEN": "",
-            "Description": Name,
-            "DescriptionEN": "",
-            "Year": Year,
-            "Website": Website,
-            "LogoThumbnail": LogoThumbnail,
-            "ModifiedDate": Start,
-            "PublishStatus": "Y",
-            "SubActivityStatus": "N",
-            "RegistrationStart": Start,
-            "RegistrationEnd": End,
-            "PaymentStart": Start,
-            "PaymentEnd": End,
-            "PaymentDueAfter": "",
-            "DiscountCondition": "N",
-            "DiscountDescription": {},
-            "OrganizerId": "",
-            "Organizer": "",
-            "OrganizerEN": "",
-            "SectorNameTH": "",
-            "SectorNameEN": "",
-            "Start": Start,
-            "End": End,
-            "RegistrationFee": RegistrationFee,
-            "FeeCondition": "N",
-            "Participants": "",
-            "ParticipantsUnit": "",
-            "LocationType": "P",
-            "CountryCode": "",
-            "CountryNameTH": "",
-            "CountryNameEN": "",
-            "Location": Location,
-            "LocationEN": "",
-            "ProvinceId": "",
-            "ProvinceNameTH": "",
-            "ProvinceNameEN": "",
-            "DistrictId": "",
-            "DistrictNameTH": "",
-            "DistrictNameEN": "",
-            "SubdistrictId": "",
-            "SubdistrictNameTH": "",
-            "SubdistrictNameEN": "",
-            "PostalCode": "",
-            "Latitude": "",
-            "Longitude": "",
-            "IsTradeShow": "N",
-            "AttendeePerson": {},
-            "AttendeeJuristic": {},
-            "DataSource": Web,
-        }
-    )
+    ReturnJSON = {
+        "Keyword": [],
+        "Gallery": [],
+        "Document": [],
+        "AttendeeType": [],
+        "FeeChannel": [],
+        "Product": [],
+        "ResponsibleInfo": [],
+        "Speaker": [],
+        "PolicyPublicDemand": [],
+        "TypeId": "",
+        "Type": "",
+        "TypeEN": "",
+        "Id": Id,
+        "Name": Name,
+        "NameEN": "",
+        "Description": "",
+        "DescriptionEN": "",
+        "Year": "",
+        "Website": Website,
+        "LogoThumbnail": LogoThumbnail,
+        "ModifiedDate": Start,
+        "PublishStatus": "Y",
+        "SubActivityStatus": "N",
+        "RegistrationStart": Start,
+        "RegistrationEnd": End,
+        "PaymentStart": Start,
+        "PaymentEnd": End,
+        "PaymentDueAfter": "",
+        "DiscountCondition": "N",
+        "DiscountDescription": {},
+        "OrganizerId": "",
+        "Organizer": "",
+        "OrganizerEN": "",
+        "SectorNameTH": "",
+        "SectorNameEN": "",
+        "Start": Start,
+        "End": End,
+        "RegistrationFee": "",
+        "FeeCondition": "N",
+        "Participants": "",
+        "ParticipantsUnit": "",
+        "LocationType": "P",
+        "CountryCode": "",
+        "CountryNameTH": "",
+        "CountryNameEN": "",
+        "Location": Location,
+        "LocationEN": "",
+        "ProvinceId": "",
+        "ProvinceNameTH": "",
+        "ProvinceNameEN": "",
+        "DistrictId": "",
+        "DistrictNameTH": "",
+        "DistrictNameEN": "",
+        "SubdistrictId": "",
+        "SubdistrictNameTH": "",
+        "SubdistrictNameEN": "",
+        "PostalCode": "",
+        "Latitude": "",
+        "Longitude": "",
+        "IsTradeShow": "N",
+        "AttendeePerson": {},
+        "AttendeeJuristic": {},
+        "DataSource": Web,
+    }
 
-print(json.dumps(Result[1:], indent=4, sort_keys=True, ensure_ascii=False))
+    print(json.dumps(ReturnJSON, indent=4, sort_keys=True,
+          ensure_ascii=False).encode('utf-8'))
+
+    elastic_client = Elasticsearch(
+        hosts=["elastic:changeme@172.24.1.29:9200"])
+
+    resp = elastic_client.search(index="webscraping", body={
+        "query": {
+            "bool": {
+                "must": {
+                    "match": {
+                        "Name": Name
+                    }
+                }
+            }
+        }
+    })
+
+    if resp["hits"]["total"]["value"] < 1:
+
+        response = elastic_client.index(
+            index='webscraping',
+            doc_type='event',
+            id=uuid.uuid4(),
+            body=json.dumps(ReturnJSON, indent=4, sort_keys=True,
+                            ensure_ascii=False).encode('utf-8')
+        )
+
+        print(response)
+
+    else:
+        print("Duplicate")

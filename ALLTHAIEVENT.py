@@ -1,8 +1,7 @@
 import requests
 import json
-from bs4 import BeautifulSoup
-
-Result = []
+from elasticsearch import Elasticsearch
+import uuid
 
 Web = "ALLTHAIEVENT"
 
@@ -111,11 +110,35 @@ for i in Data:
         "DataSource": Web,
     }
 
-    Result.append(ReturnJSON)
+    print(json.dumps(ReturnJSON, indent=4, sort_keys=True,
+          ensure_ascii=False).encode('utf-8'))
 
-    print(Remain)
-    print(json.dumps(ReturnJSON, indent=4, sort_keys=True, ensure_ascii=False))
+    elastic_client = Elasticsearch(
+        hosts=["elastic:changeme@172.24.1.29:9200"])
 
-    ReturnJSON = {}
+    resp = elastic_client.search(index="webscraping", body={
+        "query": {
+            "bool": {
+                "must": {
+                    "match": {
+                        "Name": Name
+                    }
+                }
+            }
+        }
+    })
 
-print(json.dumps(Result[:], indent=4, sort_keys=True, ensure_ascii=False))
+    if resp["hits"]["total"]["value"] < 1:
+
+        response = elastic_client.index(
+            index='webscraping',
+            doc_type='event',
+            id=uuid.uuid4(),
+            body=json.dumps(ReturnJSON, indent=4, sort_keys=True,
+                            ensure_ascii=False).encode('utf-8')
+        )
+
+        print(response)
+
+    else:
+        print("Duplicate")
